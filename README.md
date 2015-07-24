@@ -1,5 +1,13 @@
 # sqrl-auth-daemon
-System wide SQRL client delegation for CPS listening on port 25519.
+System wide SQRL client delegation for CPS on listening on port 25519. This is only for POSIX systems.
+
+Install by using:
+```bash
+$ git clone "https://github.com/TimLuq/sqrl-auth-daemon.git"
+$ cd sqrl-auth-daemon
+$ cabal install
+```
+(This requires you to have `cabal` and `ghc` installed, perhaps using the package `haskell-platform`.)
 
 ## How it works
 The daemon will, first of all, deny any connection from any IP other than `127.0.0.1`.
