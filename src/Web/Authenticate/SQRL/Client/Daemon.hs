@@ -4,7 +4,7 @@ module Web.Authenticate.SQRL.Client.Daemon where
 
 import Network.Socket (SockAddr(SockAddrInet))
 import Network.Wai (ResponseReceived(), responseLBS, responseFile, Application, remoteHost, rawPathInfo, rawQueryString, requestHeaders)
-import Network.Wai.Handler.Warp (runSettings, defaultSettings, setHost, setPort, setNoParsePath)
+import Network.Wai.Handler.Warp (runSettings, defaultSettings, setHost, setPort, setNoParsePath, exceptionResponseForDebug, setOnExceptionResponse)
 import Network.HTTP.Types (mkStatus, status200, status303, status403, status404)
 import Network.HTTP.Types.Header (hContentType, hLocation, hReferer, hServer)
 import qualified Data.Text as T
@@ -62,7 +62,7 @@ main :: IO ()
 main = do
   let port = 25519
       host = "127.0.0.1"
-      sett = setNoParsePath True $ setHost host $ setPort port defaultSettings
+      sett = setOnExceptionResponse exceptionResponseForDebug $ setNoParsePath True $ setHost host $ setPort port defaultSettings
   putStrLn $ "Listening on " ++ show host ++ ":" ++ show port
   runSettings sett app
 
@@ -145,7 +145,7 @@ app req f =
           errlines <- LBS.intercalate (LBS.append (LBS.fromStrict $ TE.encodeUtf8 $ T.pack exe) ": ") . LBS.groupBy (\a _ -> 10 /= a) <$> LBS.hGetContents errh
           LBS.hPutStr stderr errlines
           hClose errh
-          closeFd thiserr
+          --closeFd thiserr
           
           -- now everything is done
           f $ responseLBS stts (serverHdr : hdrs) body
@@ -173,9 +173,9 @@ app req f =
           closeFd fdError
           LBS.appendFile logf $ LBS.fromChunks ["Replacing executable ", TE.encodeUtf8 $ T.pack exe, ".\n"]
           handle (\e -> BS.appendFile logf (BS.append "Exception: " $ TE.encodeUtf8 $ T.pack $ show (e :: SomeException)) >> fdWrite stdOutput "\0\0\0\0\0\0\0\0\0\0" >> closeFd stdOutput >> closeFd stdInput >> closeFd stdError >> throwIO e) $ do
-            setUserID $ userID user
-            setGroupID $ userGroupID user
             createSession
+            setGroupID $ userGroupID user
+            setUserID $ userID user
             executeFile exe False args (Just $ map (\(a, b) -> (T.unpack a, T.unpack b)) env)
           BS.appendFile logf "Replacing executable failed.\n"
         lookupPortUser port = do
