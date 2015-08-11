@@ -55,9 +55,10 @@ fi
 ## relay the CPS request to the users client
 curl --include -A "sqrl-cps-bash/0.1" -e "${args[cps-referer]}" \
  "http://127.0.0.1:$port${args[cps-path-info]}${args[cps-query-string]}"
+res=$?
 
 if [ $sqrlstarted == 1 ]; then
   sqrldone $port
 fi
 
-exit $?
+exit $res
