@@ -38,8 +38,10 @@ fi
 ## find out if the client is running - if not then try to start it
 lsof -ti tcp:$port &> /dev/null
 res=$?
+sqrlstarted=0
 if [ $res == 1 ]; then
   #nothing is listening to the port so start sqrl.exe using wine
+  sqrlstarted=1
   startsqrl $port
   sleep "0.3" # wait to give the client time to start
 elif [ $res != 0 ]; then
@@ -53,5 +55,9 @@ fi
 ## relay the CPS request to the users client
 curl --include -A "sqrl-cps-bash/0.1" -e "${args[cps-referer]}" \
  "http://127.0.0.1:$port${args[cps-path-info]}${args[cps-query-string]}"
+
+if [ $sqrlstarted == 1 ]; then
+  sqrldone $port
+fi
 
 exit $?
